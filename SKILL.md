@@ -1,11 +1,11 @@
 ---
 name: Essential_Skill
-description: Core behavioral guidelines requiring doc_manager_skill on every task, four distinct planning subagents with separate assignments, strict user plan approval, cross-platform skill discovery, task-based Gemini model selection, execution audits, cost/token guards, and automated Git workflows.
+description: Core behavioral guidelines requiring doc_manager_skill on every task, plans that assign separate execution tasks to at least four distinct subagents, strict user plan approval, cross-platform skill discovery, task-based Gemini model selection, execution audits, and automated Git workflows.
 ---
 
 # Essential Skill
 
-This skill defines the complete operational lifecycle for workspace tasks: mandatory use of `doc_manager_skill`, planning with at least four distinct subagents assigned separate tasks, explicit user plan authorization, cross-platform skill discovery, task-based Gemini model selection, subagent execution, result audits, and safe Git workflows.
+This skill defines the complete operational lifecycle for workspace tasks: mandatory use of `doc_manager_skill`, plans that allocate separate execution work to at least four distinct subagents, explicit user plan authorization, cross-platform skill discovery, task-based Gemini model selection, coordinated subagent execution, result audits, and safe Git workflows.
 
 ---
 
@@ -43,7 +43,7 @@ This skill defines the complete operational lifecycle for workspace tasks: manda
 - **Gather empirical runtime verification** (running builds, tests, or validation commands) demonstrating clean success before declaring work complete.
 
 ### Rule 6: Tool & Service Unavailability Fallback
-- If any required subagent tool is offline or fewer than four distinct subagents can be launched, immediately alert the user and stop; do not replace them with role prompts in one agent or main-thread work.
+- If any required subagent tool is offline or fewer than four distinct execution subagents can be launched, immediately alert the user and stop; do not replace them with role prompts in one agent or assign all implementation work to the main agent.
 - If the LLM Council or another optional review service is unavailable, alert the user and follow the approved fallback process.
 - Do NOT silently skip mandatory verification steps or enter retry loops.
 
@@ -53,17 +53,12 @@ This skill defines the complete operational lifecycle for workspace tasks: manda
 
 ### Rule 7: Planning & LLM Council Pre-Review
 - **Analyze & Plan**: Use Claude model capabilities to inspect codebase, evaluate complexity, and construct execution steps.
-- **Mandatory Four-Agent Planning Team**: Before presenting any plan, launch at least **four distinct subagent instances**. Each must receive a separate, non-overlapping planning assignment and return its own findings. Required assignments:
-  1. **Requirements Analyst** — extract user goals, constraints, ambiguities, and acceptance criteria.
-  2. **Codebase Analyst** — inspect relevant files, architecture, dependencies, and existing conventions.
-  3. **Design/Risk Analyst** — assess implementation options, edge cases, security, and scope risks.
-  4. **Verification Planner** — define tests, validation commands, and measurable completion checks.
-  These are four separate agents, not four personas or sequential prompts to one agent. They must not modify files during planning. Combine their independent reports into one plan and identify unresolved disagreements. Add more agents when useful; never use fewer than four.
-- **LLM Council Pre-Plan Review**: After the four reports are consolidated, consult the **LLM Council** (`council-chairman` or multi-model subagents) for one critique pass when available. The Council review does not replace the four required subagents.
+- **Plan Must Allocate Execution Work to Four Subagents**: Before presenting the plan, decompose the approved scope into at least **four distinct, non-overlapping work packages** and assign each package to a different subagent instance. The plan must explicitly show, for every subagent: its role/name, exact task, files or components it owns, expected deliverable, dependencies, and verification responsibility. These are execution assignments, not planning/review personas. Examples include implementation of separate components, tests, documentation, integration, or a focused verification task, chosen to fit the actual project. Do not invent unnecessary code changes just to create assignments; use meaningful independent deliverables. The main agent coordinates, resolves interfaces, integrates the results, and checks completion; it must not silently perform all work itself. Four roles/prompts handled by one agent do not count.
+- **Plan Review**: Use the LLM Council (`council-chairman` or reviewer subagent) for one critique pass when available. This optional review does not replace the four execution assignments.
 - **Token & Cost Guard**: Cap Council reviews to **max 1 pass** per phase. Multi-pass reviews are forbidden unless explicitly requested by the user.
 - **⚡ Fast-Track Exception for Tiny Tasks**:
   - **Condition**: Task complexity is **Low**, targets **1 single file**, and modifies **<5 lines**.
-  - **Action**: Skip only the optional Pre-Plan Council Review and Post-Execution Audit. The four distinct planning subagents and mandatory `doc_manager_skill` workflow still apply. Present the simple plan for approval, then execute.
+  - **Action**: Skip only the optional Pre-Plan Council Review and Post-Execution Audit. The plan must still assign four distinct execution subagents, and the mandatory `doc_manager_skill` workflow still applies. Present the assignments for approval, then execute.
 
 ---
 
@@ -105,10 +100,11 @@ Determine the appropriate Gemini model tier for subagent execution based on task
 
 ## Phase 3: Subagent Execution & Verification
 
-### Rule 10: Mandatory Subagent Execution
-- The four distinct planning subagents in Rule 7 are required for every task, including low-complexity and fast-track tasks. Each must complete its own separate planning assignment before the plan is presented.
-- After approval, launch dedicated Gemini subagents (`invoke_subagent` / `define_subagent`) for execution tasks matching the approved plan and model tiers. Keep execution assignments scoped and non-overlapping.
-- Never claim that one agent with four role prompts satisfies the four-agent requirement. If four distinct planning agents cannot be run, stop and ask the user rather than continuing with fewer.
+### Rule 10: Mandatory Four-Subagent Execution
+- After the user approves the plan, launch at least four **distinct Gemini subagent instances** (`invoke_subagent` / `define_subagent`) and give each the exact execution assignment listed in the plan.
+- Each subagent must perform its assigned work and return its deliverable plus verification evidence. They are workers, not merely planners or reviewers. Keep ownership non-overlapping; coordinate shared interfaces through the main agent.
+- The main agent coordinates the workers, integrates their deliverables, handles cross-task conflicts, and performs final end-to-end verification. It must not replace the four workers by doing all implementation itself.
+- Never count four role prompts to one agent, four planning-only agents, or one worker plus three reviewers as satisfying this rule. If four distinct execution agents cannot be run, stop and ask the user rather than continuing with fewer.
 - Verify all target goals empirically (builds, tests, or scripts).
 
 ---
