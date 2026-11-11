@@ -1,11 +1,11 @@
 ---
 name: Essential_Skill
-description: Core behavioral guidelines combining Claude-driven planning, LLM Council pre-plan review & post-execution audit, strict user plan approval, cross-platform skill discovery, task-based Gemini model selection, mandatory Gemini subagent execution, cost/token guards, fast-track pipeline, failure fallbacks, caveman TUI formatting, and automated Git upload workflows.
+description: Core behavioral guidelines requiring doc_manager_skill on every task, four distinct planning subagents with separate assignments, strict user plan approval, cross-platform skill discovery, task-based Gemini model selection, execution audits, cost/token guards, and automated Git workflows.
 ---
 
 # Essential Skill
 
-This skill defines the complete operational lifecycle for workspace tasks: using Claude for strategic planning, obtaining explicit user plan authorization, running dynamic cross-platform skill discovery (`Skill_Finder`), selecting the appropriate Gemini model tier based on task complexity, executing via dedicated Gemini subagents, auditing results with the LLM Council, protecting against token bloat and tool outages, and automating Git upload workflows.
+This skill defines the complete operational lifecycle for workspace tasks: mandatory use of `doc_manager_skill`, planning with at least four distinct subagents assigned separate tasks, explicit user plan authorization, cross-platform skill discovery, task-based Gemini model selection, subagent execution, result audits, and safe Git workflows.
 
 ---
 
@@ -24,6 +24,7 @@ This skill defines the complete operational lifecycle for workspace tasks: using
 - Set `RequestFeedback: true` on the artifact metadata.
 - **STRICT APPROVAL GATE**: **Do NOT modify files or execute code until the user explicitly approves the Plan Artifact.**
 - **Repeated Rejection Guard**: If the user rejects the plan artifact **2 consecutive times**, stop automated plan generation. Ask the user in TUI text to provide exact requirements, preferred design, or step-by-step instructions directly.
+- **Mandatory `doc_manager_skill`**: Before planning any task, locate and read `doc_manager_skill/SKILL.md` (use the installed skill path if it is not in the workspace). Run its `context` command and inspect the result. Run `validate` when the workspace already has a harness. If the harness is missing, include `doc_manager.py init` in the plan and run it only after approval; never create harness files before approval. After approval, run `init` if needed, then `validate`, `context`, and `discover`. Use `doc_manager.py check` before every side effect and run the configured `PostToolUse` hook after each edit or command. Run `validate` again before completion. If `doc_manager_skill` or its runtime is unavailable, stop and ask the user; do not bypass it or substitute another workflow.
 
 ### Rule 2: No Assumptions
 - **Make no assumptions.**
@@ -42,10 +43,9 @@ This skill defines the complete operational lifecycle for workspace tasks: using
 - **Gather empirical runtime verification** (running builds, tests, or validation commands) demonstrating clean success before declaring work complete.
 
 ### Rule 6: Tool & Service Unavailability Fallback
-- If any subagent tool, MCP server, or LLM Council service is offline, unresponsive, or unavailable:
-  - Immediately alert the user in TUI Caveman text.
-  - Do NOT silently skip verification steps or enter retry loops.
-  - Fall back to main-thread execution or direct commands with explicit user confirmation.
+- If any required subagent tool is offline or fewer than four distinct subagents can be launched, immediately alert the user and stop; do not replace them with role prompts in one agent or main-thread work.
+- If the LLM Council or another optional review service is unavailable, alert the user and follow the approved fallback process.
+- Do NOT silently skip mandatory verification steps or enter retry loops.
 
 ---
 
@@ -53,18 +53,24 @@ This skill defines the complete operational lifecycle for workspace tasks: using
 
 ### Rule 7: Planning & LLM Council Pre-Review
 - **Analyze & Plan**: Use Claude model capabilities to inspect codebase, evaluate complexity, and construct execution steps.
-- **LLM Council Pre-Plan Review**: Consult the **LLM Council** (`council-chairman` or multi-model subagents) to critique and refine the plan.
+- **Mandatory Four-Agent Planning Team**: Before presenting any plan, launch at least **four distinct subagent instances**. Each must receive a separate, non-overlapping planning assignment and return its own findings. Required assignments:
+  1. **Requirements Analyst** — extract user goals, constraints, ambiguities, and acceptance criteria.
+  2. **Codebase Analyst** — inspect relevant files, architecture, dependencies, and existing conventions.
+  3. **Design/Risk Analyst** — assess implementation options, edge cases, security, and scope risks.
+  4. **Verification Planner** — define tests, validation commands, and measurable completion checks.
+  These are four separate agents, not four personas or sequential prompts to one agent. They must not modify files during planning. Combine their independent reports into one plan and identify unresolved disagreements. Add more agents when useful; never use fewer than four.
+- **LLM Council Pre-Plan Review**: After the four reports are consolidated, consult the **LLM Council** (`council-chairman` or multi-model subagents) for one critique pass when available. The Council review does not replace the four required subagents.
 - **Token & Cost Guard**: Cap Council reviews to **max 1 pass** per phase. Multi-pass reviews are forbidden unless explicitly requested by the user.
 - **⚡ Fast-Track Exception for Tiny Tasks**:
   - **Condition**: Task complexity is **Low**, targets **1 single file**, and modifies **<5 lines**.
-  - **Action**: Skip Pre-Plan Council Review and Post-Execution Audit. Present simple plan directly to user for fast approval, then execute.
+  - **Action**: Skip only the optional Pre-Plan Council Review and Post-Execution Audit. The four distinct planning subagents and mandatory `doc_manager_skill` workflow still apply. Present the simple plan for approval, then execute.
 
 ---
 
 ## Phase 2: Skill Discovery & Gemini Model Selection
 
 ### Rule 8: Mandatory Cross-Platform Skill Activation
-Once the plan artifact is approved, immediately run Skill Finder using cross-platform paths:
+Once the plan artifact is approved, immediately run `doc_manager.py discover` and Skill Finder using cross-platform paths. `doc_manager_skill` is mandatory on every task; other matched skills are activated as applicable:
 
 #### Step 1: Execute Skill Finder (Cross-Platform)
 Run skill discovery script dynamically based on OS:
@@ -99,9 +105,10 @@ Determine the appropriate Gemini model tier for subagent execution based on task
 
 ## Phase 3: Subagent Execution & Verification
 
-### Rule 10: Always Use Gemini Subagents for Execution
-- **Never execute heavy coding tasks directly on the main thread.**
-- Launch dedicated Gemini subagents (`invoke_subagent` / `define_subagent`) to perform execution tasks matching chosen model tiers.
+### Rule 10: Mandatory Subagent Execution
+- The four distinct planning subagents in Rule 7 are required for every task, including low-complexity and fast-track tasks. Each must complete its own separate planning assignment before the plan is presented.
+- After approval, launch dedicated Gemini subagents (`invoke_subagent` / `define_subagent`) for execution tasks matching the approved plan and model tiers. Keep execution assignments scoped and non-overlapping.
+- Never claim that one agent with four role prompts satisfies the four-agent requirement. If four distinct planning agents cannot be run, stop and ask the user rather than continuing with fewer.
 - Verify all target goals empirically (builds, tests, or scripts).
 
 ---
